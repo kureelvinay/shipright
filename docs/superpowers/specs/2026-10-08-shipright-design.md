@@ -195,6 +195,9 @@ Sections, in order:
    claude plugin marketplace add <org>/shipright
    claude plugin install shipright@shipright --scope user
    ```
+   Then, one time, in any Claude Code session: `/plugin` → Marketplaces →
+   shipright → **Enable auto-update**. Without this, future pin bumps never
+   reach the machine.
    Verify: `claude plugin list` shows six plugins; typing `/shipright:` in a
    session autocompletes `ship`.
 3. **Daily cheat-sheet.** Table of job → skill (same mapping as welcome.md,
@@ -207,20 +210,26 @@ Sections, in order:
 5. **For admins.**
    - *claude.ai Team/Enterprise:* Organization settings → Plugins & skills →
      Add → Sync from GitHub → `<org>/shipright`. Set **all six** plugins to
-     "Installed by default" (see §8 risk 1). Members signed in with claude.ai
-     get them with no commands, in Claude Code, desktop, and Cowork.
+     "Installed by default" (see §8 risk 1) and turn on **Sync automatically**
+     so every push to `main` re-syncs. Members signed in with claude.ai get
+     them with no commands, in Claude Code, desktop, and Cowork; Claude Code
+     syncs once per launch.
    - *IT-managed machines (API key / Bedrock):* drop this into
      `managed-settings.json` (macOS `/Library/Application Support/ClaudeCode/`,
      Linux `/etc/claude-code/`, Windows `C:\Program Files\ClaudeCode\`):
      ```json
      {
        "extraKnownMarketplaces": {
-         "shipright": { "source": { "source": "github", "repo": "<org>/shipright" } }
+         "shipright": {
+           "source": { "source": "github", "repo": "<org>/shipright" },
+           "autoUpdate": true
+         }
        },
        "enabledPlugins": { "shipright@shipright": true }
      }
      ```
-     Installs at the next session start.
+     Installs at the next session start; `autoUpdate` is locked on by the
+     managed value, so later pin bumps propagate without IT involvement.
 6. **For maintainers.** Versioning and pin-bump procedure (§6), release
    checklist (§7).
 
@@ -255,11 +264,22 @@ All three read the same repo, so one PR updates every channel.
 - Bumping a pin: one PR that changes the `sha` (and `description` version),
   after reading the upstream diff, because that code runs on every engineer's
   machine. CI validate must pass. No CHANGELOG file; git log and tags suffice.
-- Engineers on manual installs pull updates with
-  `claude plugin marketplace update shipright` followed by the plugin update
-  path the installed CLI offers (confirm the exact subcommand during
-  implementation; fall back to re-running `claude plugin install`). Org-catalog
-  members update on the next sync; managed-settings machines on next start.
+- **Update policy: pinned, then pushed.** Upstream changes never reach
+  engineers on their own. A maintainer bumps the pin (target cadence: monthly
+  review of the five upstreams, sooner for a security fix). Once merged,
+  propagation is automatic for every machine whose `shipright` marketplace has
+  auto-update on: Claude Code refreshes auto-update marketplaces within ~10
+  minutes of a session's first message and updates the installed plugins on
+  disk; the new version loads at the next launch or `/reload-plugins`.
+  Auto-update is OFF by default for non-official marketplaces, so enabling it
+  is part of install (README §2 step 3), of the managed-settings snippet
+  (`"autoUpdate": true`), and of the org catalog ("Sync automatically").
+- Manual fallback: `claude plugin update shipright@shipright`, or `/plugin` →
+  Marketplaces → shipright → Update marketplace, which refreshes the listing
+  and updates every installed plugin from that marketplace. All six plugins
+  live in this one marketplace, so dependencies are covered by that path.
+  Org-catalog members: Claude Code syncs once per launch. Managed-settings
+  machines: next session start.
 
 ## 7. Validation and release checklist
 
@@ -296,6 +316,11 @@ app bundles its own); install it once with `npm i -g @anthropic-ai/claude-code`.
    themselves report clearly when a tool is absent.
 5. **Third-party code runs on every machine.** Mitigation: SHA pins, review
    on bump, private repo with normal PR review.
+6. **Background updates fail quietly on a private repo** if git would need to
+   prompt for credentials; the last synced copy stays in place. Mitigation:
+   README §2 prerequisites require working non-interactive git auth to
+   `<org>/shipright` (SSH key or a credential helper), and the smoke test
+   in §7 step 4 uses the real remote.
 
 ## 9. Author's own migration (one-time, after first successful install)
 
@@ -312,7 +337,10 @@ app bundles its own); install it once with `npm i -g @anthropic-ai/claude-code`.
 
 ## 10. Items to confirm during implementation (not design gaps)
 
-- Exact CLI subcommand for updating an installed plugin (§6).
+- Whether `claude plugin update shipright@shipright` alone also bumps the
+  already-installed dependencies (docs do not say). The marketplace-level
+  update path and auto-update cover all six regardless, so this only affects
+  the wording of the manual fallback.
 - That `claude plugin validate .` accepts a marketplace root (§7); otherwise
   validate the marketplace via the `/plugin` UI or the schema URL.
 - `git ls-remote` results for the five pins (§6).
