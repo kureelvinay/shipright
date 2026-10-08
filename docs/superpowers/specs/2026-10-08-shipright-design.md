@@ -315,8 +315,11 @@ All three read the same repo, so one PR updates every channel.
   A pin bump between upstream releases keeps the same version string, so
   existing installs report "already at the latest version" and keep the old
   commit; only new installs get the new sha. README states this and gives a
-  force-refresh loop (uninstall + install per plugin). The lasting fix is an
-  open decision (§10): track upstream release tags instead of HEAD.
+  force-refresh loop (uninstall + install per plugin). Entries with a `ref`
+  are tag-tracked (newest tag of the same prefix family, strict X.Y.Z, never
+  backwards) and bump only on upstream releases, so those updates always
+  propagate: superpowers, ponytail, impeccable. taste-skill (untagged) and
+  understand-anything (its tags lag its version string) stay HEAD-tracked.
 - Manual fallback: `claude plugin update <plugin>@shipright` for each of the
   six plugins (`update` does not cascade to dependencies), or the
   force-refresh loop above. Org-catalog members: Claude Code syncs once per
@@ -386,13 +389,8 @@ app bundles its own); install it once with `npm i -g @anthropic-ai/claude-code`.
 - That `claude plugin validate .` accepts a marketplace root (§7); otherwise
   validate the marketplace via the `/plugin` UI or the schema URL.
 - `git ls-remote` results for the five pins (§6).
-- **Decision for the owner: track release tags instead of HEAD.** Because
-  propagation is version-gated (§6), a HEAD-tracking bump between releases
-  never reaches existing installs. Tracking the latest tag (superpowers and
-  ponytail tag `vX.Y.Z`; impeccable tags `skill-vX.Y.Z`; taste-skill is
-  untagged) makes every merged bump a version change that propagates, at the
-  cost of ~15 lines in `bump_pins.py` (tag listing + version sort) and
-  leaving untagged upstreams at a fixed pin. Recommended; not implemented.
+- Resolved 2026-10-08: per-entry tag tracking, declared by a `ref` next to
+  `sha` (the official marketplace's own convention). See §6.
 - Publish ordering: `main` holds only docs until the `build-shipright` PR is
   merged, so the remote smoke test runs after the merge (plan Task 8).
 - `bump-pins.yml` needs the repo setting "Allow GitHub Actions to create and

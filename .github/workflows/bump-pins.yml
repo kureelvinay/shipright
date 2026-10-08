@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: 22
       - run: npm i -g @anthropic-ai/claude-code
-      - name: Move pins to upstream HEAD
+      - name: Move pins to the newest tag or upstream HEAD
         id: bump
         run: |
           python3 scripts/bump_pins.py --write > summary.md

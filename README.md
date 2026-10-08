@@ -82,9 +82,9 @@ Also delete personal copies of `ship` or `graphify` under `~/.claude/skills/`. P
 
 ## Getting updates
 
-Third-party plugins are pinned to exact commits. A weekly job opens a PR when any of them has moved; a maintainer reviews and merges. With auto-update enabled (the **Enable auto-update** step under Install), your machine picks the change up within about ten minutes of your next session and loads it on the next launch, or immediately with `/reload-plugins`.
+Third-party plugins are pinned to exact commits. superpowers, ponytail and impeccable follow their upstream release tags; taste-skill and understand-anything follow the upstream main branch. A weekly job opens a PR when any of them has moved; a maintainer reviews and merges. With auto-update enabled (the **Enable auto-update** step under Install), your machine picks the change up within about ten minutes of your next session and loads it on the next launch, or immediately with `/reload-plugins`.
 
-One limitation to know: Claude Code decides whether a plugin needs updating by its upstream `version` string, not by the pinned commit. A pin bump that lands between upstream releases (same version, new commit) reaches **new** installs but not machines that already have that version. The weekly PR's compare link shows whether the upstream version changed. To force a machine onto the current pins:
+One limitation to know: Claude Code decides whether a plugin needs updating by its upstream `version` string, not by the pinned commit. Tag-tracked plugins only bump on a release, so those updates always propagate. For the main-branch-tracked ones, a bump that lands between upstream releases (same version, new commit) reaches **new** installs but not machines that already have that version. The weekly PR's compare link shows whether the upstream version changed. To force a machine onto the current pins:
 
 ```bash
 for p in superpowers impeccable taste-skill ponytail understand-anything; do
@@ -132,7 +132,7 @@ Plugins install at the start of each user's next session. `autoUpdate` is locked
 ## For maintainers
 
 - The ShipRight version lives in two places that must match: `plugins/shipright/.claude-plugin/plugin.json` and the `shipright` entry in `.claude-plugin/marketplace.json`. Bump both on any change to skills, hook, welcome text, or dependencies, then tag with `claude plugin tag`.
-- Third-party pins live in `.claude-plugin/marketplace.json` as `sha` values. `.github/workflows/bump-pins.yml` runs every Monday and opens a PR with compare links when any upstream moved. Read the diff, then merge. Run it by hand from the Actions tab for an urgent fix.
+- Third-party pins live in `.claude-plugin/marketplace.json` as `sha` values. An entry with a `ref` (for example `v6.3.0`) tracks the newest tag of that family: same prefix, strict `X.Y.Z` ending, never backwards. An entry with only `sha` tracks the upstream main branch. To switch a plugin to tag tracking, add `ref` with its current tag and set `sha` to that tag's commit. `.github/workflows/bump-pins.yml` runs every Monday and opens a PR with compare links when any upstream moved. Read the diff, then merge. Run it by hand from the Actions tab for an urgent fix.
 - `bump-pins.yml` opens its PR with the built-in `GITHUB_TOKEN`, which GitHub blocks by default. Once, in the repo: **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests** (for an org repo, the org-level setting of the same name must allow it too). Without this, the Monday run fails at `gh pr create`.
 - Keep `.claude-plugin/marketplace.json` in canonical form: `json.dumps(indent=2)` plus a trailing newline. A test fails CI otherwise. After a hand edit, reformat with `python3 -c "import json;p='.claude-plugin/marketplace.json';d=json.load(open(p));open(p,'w').write(json.dumps(d,indent=2)+'\n')"`.
 - If you add required status checks on `main`, bump PRs will never receive them (PRs opened by `GITHUB_TOKEN` do not start workflows). Close and reopen the PR by hand to trigger `validate`, or keep `validate` optional and require only a pull-request review.
