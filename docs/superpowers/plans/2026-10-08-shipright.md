@@ -743,20 +743,33 @@ grep -rn --exclude-dir=.git --exclude-dir=docs '<org>' . ; echo "remaining above
 git commit -am "Set org to $ORG" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 2: Create the private repo and push**
+- [ ] **Step 2: Create the private repo, push both branches, open the PR**
+
+`main` holds only the spec and plan; the implementation is on `build-shipright`. Push both and open a PR so `validate.yml` runs on it. The user merges; Claude never merges.
 
 `gh` is not installed on the author's machine. Either install it (`brew install gh && gh auth login`) and run:
 ```bash
-gh repo create "$ORG/shipright" --private --source=. --remote=origin --push
+gh repo create "$ORG/shipright" --private --source=. --remote=origin
+git push -u origin main
+git push -u origin build-shipright
+gh pr create --base main --head build-shipright --title "ShipRight v1.0.0" --body "Marketplace + bundle plugin, README, bump-pins workflow. See docs/superpowers/specs/2026-10-08-shipright-design.md."
 ```
 or create an empty private repo named `shipright` in the GitHub UI and run:
 ```bash
 git remote add origin "git@github.com:$ORG/shipright.git"
 git push -u origin main
+git push -u origin build-shipright
 ```
-Expected: `main` visible on GitHub; the `validate` workflow runs on the push and passes (check the Actions tab).
+then open the PR from `build-shipright` into `main` in the UI.
+Expected: the `validate` check passes on the PR. The user merges the PR.
 
-- [ ] **Step 3: Smoke test from the real remote**
+- [ ] **Step 2b: Repo settings (once, in the GitHub UI)**
+
+1. Settings → Actions → General → Workflow permissions → enable **Allow GitHub Actions to create and approve pull requests** (for an org repo, the org-level setting of the same name must allow it). Without this, `bump-pins.yml` fails at `gh pr create`.
+2. Settings → Branches → add a protection rule for `main` that requires a pull request before merging. Do **not** require the `validate` status check: PRs opened by `GITHUB_TOKEN` never start workflows, so bump PRs would be blocked forever.
+Expected: both settings saved.
+
+- [ ] **Step 3: Smoke test from the real remote (after the PR is merged)**
 
 Run:
 ```bash
@@ -766,7 +779,7 @@ claude plugin install shipright@shipright --scope user
 claude plugin list
 unset CLAUDE_CONFIG_DIR
 ```
-Expected: six plugins listed.
+Expected: six plugins listed. If `marketplace add` fails with an SSH host-key error, use `https://github.com/$ORG/shipright.git` instead.
 
 - [ ] **Step 4: Install on the author's real profile and check the hook live**
 

@@ -96,24 +96,28 @@ Claude Code. `graphify`'s `.graphify_version` file is copied too.
     {
       "name": "taste-skill",
       "description": "Design-taste skills: minimalist, brutalist, soft, redesign, image-to-code.",
-      "source": { "source": "github", "repo": "leonxlnx/taste-skill", "sha": "<40-hex, see §6>" }
+      "source": { "source": "url", "url": "https://github.com/leonxlnx/taste-skill.git", "sha": "<40-hex, see §6>" }
     },
     {
       "name": "ponytail",
       "description": "Lazy-senior-dev mode: YAGNI, stdlib first, shortest working diff.",
-      "source": { "source": "github", "repo": "DietrichGebert/ponytail", "sha": "<40-hex, see §6>" }
+      "source": { "source": "url", "url": "https://github.com/DietrichGebert/ponytail.git", "sha": "<40-hex, see §6>" }
     },
     {
       "name": "understand-anything",
       "description": "Codebase knowledge graphs, onboarding tours, diff analysis, dashboard.",
-      "source": { "source": "github", "repo": "Egonex-AI/Understand-Anything", "sha": "<40-hex, see §6>" }
+      "source": { "source": "url", "url": "https://github.com/Egonex-AI/Understand-Anything.git", "sha": "<40-hex, see §6>" }
     }
   ]
 }
 ```
 
 Source shapes mirror ones already proven in the official marketplace
-(`url` with `sha` for superpowers; `git-subdir` with full URL, `path`, `sha`).
+(`url` with `sha`; `git-subdir` with full URL, `path`, `sha`). The `github`
+shorthand is deliberately not used: during implementation it cloned over SSH
+and failed on a machine with no GitHub host key, while HTTPS `url` sources
+install with no SSH setup. All five upstreams are public, so HTTPS needs no
+credentials.
 The `superpowers` plugin manifest lives at the repo root, as do taste-skill,
 ponytail and understand-anything; impeccable's lives under `plugin/`, hence
 `git-subdir`.
@@ -230,7 +234,12 @@ Sections, in order:
      }
      ```
      Installs at the next session start; `autoUpdate` is locked on by the
-     managed value, so later pin bumps propagate without IT involvement.
+     managed value. The snippet also sets `"env": {"FORCE_AUTOUPDATE_PLUGINS": "1"}`
+     because plugin auto-update is skipped whenever Claude Code's own updater
+     is disabled (`DISABLE_AUTOUPDATER`, `DISABLE_UPDATES`, `autoUpdates:
+     false`), which managed fleets commonly set. HTTPS-only fleets use
+     `{"source": "git", "url": "https://github.com/<org>/shipright.git"}`
+     (not `url`, which means "fetch a marketplace.json over HTTP").
 6. **For maintainers.** Versioning and pin-bump procedure (§6), release
    checklist (§7).
 
@@ -298,14 +307,20 @@ All three read the same repo, so one PR updates every channel.
   minutes of a session's first message and updates the installed plugins on
   disk; the new version loads at the next launch or `/reload-plugins`.
   Auto-update is OFF by default for non-official marketplaces, so enabling it
-  is part of install (README §2 step 3), of the managed-settings snippet
+  is part of install (README Install section), of the managed-settings snippet
   (`"autoUpdate": true`), and of the org catalog ("Sync automatically").
-- Manual fallback: `claude plugin update shipright@shipright`, or `/plugin` →
-  Marketplaces → shipright → Update marketplace, which refreshes the listing
-  and updates every installed plugin from that marketplace. All six plugins
-  live in this one marketplace, so dependencies are covered by that path.
-  Org-catalog members: Claude Code syncs once per launch. Managed-settings
-  machines: next session start.
+- **Propagation is version-gated (verified in CLI 2.1.197 during the final
+  review).** Claude Code decides a plugin needs updating by its `version`
+  (upstream `plugin.json` first, then the marketplace entry, then the sha).
+  A pin bump between upstream releases keeps the same version string, so
+  existing installs report "already at the latest version" and keep the old
+  commit; only new installs get the new sha. README states this and gives a
+  force-refresh loop (uninstall + install per plugin). The lasting fix is an
+  open decision (§10): track upstream release tags instead of HEAD.
+- Manual fallback: `claude plugin update <plugin>@shipright` for each of the
+  six plugins (`update` does not cascade to dependencies), or the
+  force-refresh loop above. Org-catalog members: Claude Code syncs once per
+  launch. Managed-settings machines: next session start.
 
 ## 7. Validation and release checklist
 
@@ -363,13 +378,23 @@ app bundles its own); install it once with `npm i -g @anthropic-ai/claude-code`.
 
 ## 10. Items to confirm during implementation (not design gaps)
 
-- Whether `claude plugin update shipright@shipright` alone also bumps the
-  already-installed dependencies (docs do not say). The marketplace-level
-  update path and auto-update cover all six regardless, so this only affects
-  the wording of the manual fallback.
+- Resolved: `claude plugin update shipright@shipright` does not cascade to
+  dependencies and is a no-op for pin bumps (§6); README loops over all six.
+- To observe during Task 8: whether `claude plugin uninstall <dep>@shipright`
+  is refused while `shipright` still depends on it. If so, the README's
+  force-refresh loop needs `--prune` or a reinstall of `shipright` instead.
 - That `claude plugin validate .` accepts a marketplace root (§7); otherwise
   validate the marketplace via the `/plugin` UI or the schema URL.
 - `git ls-remote` results for the five pins (§6).
-- Whether each upstream publishes release tags consistently. If all five do,
-  bump-pins may track the latest tag instead of default-branch HEAD, which
-  yields fewer, more meaningful PRs. Default-branch HEAD is the safe baseline.
+- **Decision for the owner: track release tags instead of HEAD.** Because
+  propagation is version-gated (§6), a HEAD-tracking bump between releases
+  never reaches existing installs. Tracking the latest tag (superpowers and
+  ponytail tag `vX.Y.Z`; impeccable tags `skill-vX.Y.Z`; taste-skill is
+  untagged) makes every merged bump a version change that propagates, at the
+  cost of ~15 lines in `bump_pins.py` (tag listing + version sort) and
+  leaving untagged upstreams at a fixed pin. Recommended; not implemented.
+- Publish ordering: `main` holds only docs until the `build-shipright` PR is
+  merged, so the remote smoke test runs after the merge (plan Task 8).
+- `bump-pins.yml` needs the repo setting "Allow GitHub Actions to create and
+  approve pull requests"; `main` should require a PR but not the `validate`
+  check (PRs from `GITHUB_TOKEN` never start workflows).

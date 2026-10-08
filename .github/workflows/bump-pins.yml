@@ -1,0 +1,41 @@
+name: bump-pins
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm i -g @anthropic-ai/claude-code
+      - name: Move pins to upstream HEAD
+        id: bump
+        run: |
+          python3 scripts/bump_pins.py --write > summary.md
+          if [ -s summary.md ]; then echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+      - name: Validate (PRs opened with GITHUB_TOKEN do not trigger validate.yml)
+        if: steps.bump.outputs.changed == 'true'
+        run: claude plugin validate . --strict
+      - name: Open or refresh the PR
+        if: steps.bump.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "shipright-bot"
+          git config user.email "shipright-bot@users.noreply.github.com"
+          git checkout -B bump-pins
+          git add .claude-plugin/marketplace.json
+          git commit -m "Bump third-party plugin pins"
+          git push --force origin bump-pins
+          if [ "$(gh pr list --head bump-pins --state open --json number --jq length)" = "0" ]; then
+            gh pr create --title "Bump third-party plugin pins" --body-file summary.md --base main --head bump-pins
+          else
+            gh pr edit bump-pins --body-file summary.md
+          fi
