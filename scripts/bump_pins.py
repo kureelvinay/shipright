@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 MARKETPLACE = Path(__file__).resolve().parent.parent / ".claude-plugin" / "marketplace.json"
-VERSION_RE = re.compile(r"(\d+)\.(\d+)\.(\d+)$")
+VERSION_RE = re.compile(r"(?<![\d.])(\d+)\.(\d+)\.(\d+)$")  # exactly three parts at the end
 
 
 def git_url(source):
@@ -38,6 +38,10 @@ def version_of(tag):
     if not m:
         return None
     return tag[: m.start()], tuple(int(x) for x in m.groups())
+
+
+def warn(message):
+    print("warning: " + message, file=sys.stderr)
 
 
 def latest_tag(ls_remote_output, current_ref):
@@ -69,7 +73,8 @@ def resolve(url, current_ref, git=git_output):
     """What to pin: (tag, sha) for a tag-tracked entry, (None, HEAD sha) for a HEAD-tracked one.
     None when a tag-tracked entry's family has no tags."""
     if current_ref is None:
-        return None, git("ls-remote", url, "HEAD").split()[0]
+        out = git("ls-remote", url, "HEAD").split()
+        return (None, out[0]) if out else None
     return latest_tag(git("ls-remote", "--tags", url), current_ref)
 
 
@@ -81,8 +86,14 @@ def bump(marketplace, resolve=resolve):
         if not isinstance(source, dict) or "sha" not in source:
             continue
         url, old_ref, old = git_url(source), source.get("ref"), source["sha"]
+        if old_ref is not None and version_of(old_ref) is None:
+            warn("%s: ref %r is not an X.Y.Z tag; leaving it alone" % (plugin["name"], old_ref))
+            continue
         found = resolve(url, old_ref)
-        if not found or found[1] == old:
+        if not found:
+            warn("%s: nothing to pin at %s%s" % (plugin["name"], url, " (no tags like %s)" % old_ref if old_ref else ""))
+            continue
+        if found[1] == old:
             continue
         new_ref, new = found
         if old_ref:

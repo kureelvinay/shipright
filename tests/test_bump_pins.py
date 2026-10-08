@@ -1,4 +1,6 @@
+import contextlib
 import copy
+import io
 import json
 import sys
 import tempfile
@@ -171,6 +173,44 @@ class BumpTests(unittest.TestCase):
     def test_real_marketplace_is_canonical_json(self):
         raw = REAL_MARKETPLACE.read_text()
         self.assertEqual(json.dumps(json.loads(raw), indent=2) + "\n", raw)
+
+
+class ReviewFixTests(unittest.TestCase):
+    def test_version_of_rejects_four_part_versions(self):
+        self.assertIsNone(bump_pins.version_of("v2.0.1.5"))
+        self.assertIsNone(bump_pins.version_of("1.2.3.4"))
+
+    def test_bump_skips_and_warns_on_non_version_ref(self):
+        m = copy.deepcopy(MARKETPLACE)
+        m["plugins"][4]["source"]["ref"] = "main"
+        asked = []
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            lines = bump_pins.bump(m, resolve=lambda url, ref: asked.append(url) or (ref, NEW))
+        self.assertNotIn("https://github.com/o/t.git", asked)
+        self.assertEqual(m["plugins"][4]["source"]["sha"], OLD)
+        self.assertIn("tag-plugin", err.getvalue())
+        self.assertIn("main", err.getvalue())
+        self.assertEqual(len(lines), 3)  # the three HEAD-tracked entries still bump
+
+    def test_bump_warns_when_tag_family_has_no_tags(self):
+        m = copy.deepcopy(MARKETPLACE)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            lines = bump_pins.bump(m, resolve=lambda url, ref: None if ref else (None, OLD))
+        self.assertEqual(lines, [])
+        self.assertEqual(m, MARKETPLACE)
+        self.assertIn("tag-plugin", err.getvalue())
+
+    def test_bump_updates_sha_when_tag_moved_without_version_change(self):
+        m = copy.deepcopy(MARKETPLACE)
+        lines = bump_pins.bump(m, resolve=lambda url, ref: ("v1.2.3", NEW) if ref else (None, OLD))
+        self.assertEqual(m["plugins"][4]["source"]["ref"], "v1.2.3")
+        self.assertEqual(m["plugins"][4]["source"]["sha"], NEW)
+        self.assertIn("`v1.2.3` → `v1.2.3`", lines[0])
+
+    def test_resolve_head_returns_none_on_empty_ls_remote_output(self):
+        self.assertIsNone(bump_pins.resolve("https://x/y.git", None, git=lambda *a: ""))
 
 
 if __name__ == "__main__":
