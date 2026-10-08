@@ -21,6 +21,8 @@ MARKETPLACE = {
     ],
 }
 
+REAL_MARKETPLACE = Path(__file__).resolve().parent.parent / ".claude-plugin" / "marketplace.json"
+
 
 class BumpTests(unittest.TestCase):
     def test_git_url_shapes(self):
@@ -75,6 +77,10 @@ class BumpTests(unittest.TestCase):
             out = bump_pins.main([], marketplace_path=path, resolve=lambda url: NEW)
             self.assertIn("gh-plugin", out)
             self.assertEqual(json.loads(path.read_text()), MARKETPLACE)
+
+    def test_real_marketplace_is_canonical_json(self):
+        raw = REAL_MARKETPLACE.read_text()
+        self.assertEqual(json.dumps(json.loads(raw), indent=2) + "\n", raw)
 
 
 if __name__ == "__main__":
