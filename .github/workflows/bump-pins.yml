@@ -34,8 +34,8 @@ jobs:
           git add .claude-plugin/marketplace.json
           git commit -m "Bump third-party plugin pins"
           git push --force origin bump-pins
-          if gh pr view bump-pins >/dev/null 2>&1; then
-            gh pr edit bump-pins --body-file summary.md
-          else
+          if [ "$(gh pr list --head bump-pins --state open --json number --jq length)" = "0" ]; then
             gh pr create --title "Bump third-party plugin pins" --body-file summary.md --base main --head bump-pins
+          else
+            gh pr edit bump-pins --body-file summary.md
           fi

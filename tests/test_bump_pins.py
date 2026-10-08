@@ -57,9 +57,10 @@ class BumpTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             path = Path(d) / "marketplace.json"
             path.write_text(json.dumps(MARKETPLACE))
+            before = path.read_bytes()
             out = bump_pins.main(["--write"], marketplace_path=path, resolve=lambda url: OLD)
             self.assertEqual(out, "")
-            self.assertEqual(json.loads(path.read_text()), MARKETPLACE)
+            self.assertEqual(path.read_bytes(), before)
 
     def test_main_write_rewrites_file_and_returns_summary(self):
         with tempfile.TemporaryDirectory() as d:
