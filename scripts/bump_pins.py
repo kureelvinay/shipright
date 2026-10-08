@@ -47,9 +47,17 @@ def bump(marketplace, resolve=resolve_head):
     return lines
 
 
+def main(argv, marketplace_path=MARKETPLACE, resolve=resolve_head):
+    """Run the CLI: bump pins in marketplace_path, write back when --write is given,
+    return the markdown summary ("" when nothing moved)."""
+    data = json.loads(marketplace_path.read_text())
+    changed = bump(data, resolve=resolve)
+    if changed and "--write" in argv:
+        marketplace_path.write_text(json.dumps(data, indent=2) + "\n")
+    return "\n".join(changed)
+
+
 if __name__ == "__main__":
-    data = json.loads(MARKETPLACE.read_text())
-    changed = bump(data)
-    if changed and "--write" in sys.argv:
-        MARKETPLACE.write_text(json.dumps(data, indent=2) + "\n")
-    print("\n".join(changed))
+    summary = main(sys.argv[1:])
+    if summary:
+        print(summary)

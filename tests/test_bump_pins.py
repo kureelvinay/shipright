@@ -1,5 +1,7 @@
 import copy
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -48,6 +50,31 @@ class BumpTests(unittest.TestCase):
         m = copy.deepcopy(MARKETPLACE)
         self.assertEqual(bump_pins.bump(m, resolve=lambda url: OLD), [])
         self.assertEqual(m, MARKETPLACE)
+
+    def test_main_returns_empty_and_leaves_file_when_unchanged(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "marketplace.json"
+            path.write_text(json.dumps(MARKETPLACE))
+            out = bump_pins.main(["--write"], marketplace_path=path, resolve=lambda url: OLD)
+            self.assertEqual(out, "")
+            self.assertEqual(json.loads(path.read_text()), MARKETPLACE)
+
+    def test_main_write_rewrites_file_and_returns_summary(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "marketplace.json"
+            path.write_text(json.dumps(MARKETPLACE))
+            out = bump_pins.main(["--write"], marketplace_path=path, resolve=lambda url: NEW)
+            self.assertIn("gh-plugin", out)
+            self.assertEqual(json.loads(path.read_text())["plugins"][1]["source"]["sha"], NEW)
+            self.assertTrue(path.read_text().endswith("\n"))
+
+    def test_main_dry_run_does_not_write(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "marketplace.json"
+            path.write_text(json.dumps(MARKETPLACE))
+            out = bump_pins.main([], marketplace_path=path, resolve=lambda url: NEW)
+            self.assertIn("gh-plugin", out)
+            self.assertEqual(json.loads(path.read_text()), MARKETPLACE)
 
 
 if __name__ == "__main__":
