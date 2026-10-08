@@ -307,7 +307,7 @@ All three read the same repo, so one PR updates every channel.
   minutes of a session's first message and updates the installed plugins on
   disk; the new version loads at the next launch or `/reload-plugins`.
   Auto-update is OFF by default for non-official marketplaces, so enabling it
-  is part of install (README §2 step 3), of the managed-settings snippet
+  is part of install (README Install section), of the managed-settings snippet
   (`"autoUpdate": true`), and of the org catalog ("Sync automatically").
 - **Propagation is version-gated (verified in CLI 2.1.197 during the final
   review).** Claude Code decides a plugin needs updating by its `version`
@@ -321,8 +321,6 @@ All three read the same repo, so one PR updates every channel.
   six plugins (`update` does not cascade to dependencies), or the
   force-refresh loop above. Org-catalog members: Claude Code syncs once per
   launch. Managed-settings machines: next session start.
-  Org-catalog members: Claude Code syncs once per launch. Managed-settings
-  machines: next session start.
 
 ## 7. Validation and release checklist
 
@@ -380,10 +378,11 @@ app bundles its own); install it once with `npm i -g @anthropic-ai/claude-code`.
 
 ## 10. Items to confirm during implementation (not design gaps)
 
-- Whether `claude plugin update shipright@shipright` alone also bumps the
-  already-installed dependencies (docs do not say). The marketplace-level
-  update path and auto-update cover all six regardless, so this only affects
-  the wording of the manual fallback.
+- Resolved: `claude plugin update shipright@shipright` does not cascade to
+  dependencies and is a no-op for pin bumps (§6); README loops over all six.
+- To observe during Task 8: whether `claude plugin uninstall <dep>@shipright`
+  is refused while `shipright` still depends on it. If so, the README's
+  force-refresh loop needs `--prune` or a reinstall of `shipright` instead.
 - That `claude plugin validate .` accepts a marketplace root (§7); otherwise
   validate the marketplace via the `/plugin` UI or the schema URL.
 - `git ls-remote` results for the five pins (§6).
