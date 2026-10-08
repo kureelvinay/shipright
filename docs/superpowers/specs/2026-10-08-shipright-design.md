@@ -234,7 +234,12 @@ Sections, in order:
      }
      ```
      Installs at the next session start; `autoUpdate` is locked on by the
-     managed value, so later pin bumps propagate without IT involvement.
+     managed value. The snippet also sets `"env": {"FORCE_AUTOUPDATE_PLUGINS": "1"}`
+     because plugin auto-update is skipped whenever Claude Code's own updater
+     is disabled (`DISABLE_AUTOUPDATER`, `DISABLE_UPDATES`, `autoUpdates:
+     false`), which managed fleets commonly set. HTTPS-only fleets use
+     `{"source": "git", "url": "https://github.com/<org>/shipright.git"}`
+     (not `url`, which means "fetch a marketplace.json over HTTP").
 6. **For maintainers.** Versioning and pin-bump procedure (§6), release
    checklist (§7).
 
@@ -304,10 +309,18 @@ All three read the same repo, so one PR updates every channel.
   Auto-update is OFF by default for non-official marketplaces, so enabling it
   is part of install (README §2 step 3), of the managed-settings snippet
   (`"autoUpdate": true`), and of the org catalog ("Sync automatically").
-- Manual fallback: `claude plugin update shipright@shipright`, or `/plugin` →
-  Marketplaces → shipright → Update marketplace, which refreshes the listing
-  and updates every installed plugin from that marketplace. All six plugins
-  live in this one marketplace, so dependencies are covered by that path.
+- **Propagation is version-gated (verified in CLI 2.1.197 during the final
+  review).** Claude Code decides a plugin needs updating by its `version`
+  (upstream `plugin.json` first, then the marketplace entry, then the sha).
+  A pin bump between upstream releases keeps the same version string, so
+  existing installs report "already at the latest version" and keep the old
+  commit; only new installs get the new sha. README states this and gives a
+  force-refresh loop (uninstall + install per plugin). The lasting fix is an
+  open decision (§10): track upstream release tags instead of HEAD.
+- Manual fallback: `claude plugin update <plugin>@shipright` for each of the
+  six plugins (`update` does not cascade to dependencies), or the
+  force-refresh loop above. Org-catalog members: Claude Code syncs once per
+  launch. Managed-settings machines: next session start.
   Org-catalog members: Claude Code syncs once per launch. Managed-settings
   machines: next session start.
 
@@ -374,6 +387,15 @@ app bundles its own); install it once with `npm i -g @anthropic-ai/claude-code`.
 - That `claude plugin validate .` accepts a marketplace root (§7); otherwise
   validate the marketplace via the `/plugin` UI or the schema URL.
 - `git ls-remote` results for the five pins (§6).
-- Whether each upstream publishes release tags consistently. If all five do,
-  bump-pins may track the latest tag instead of default-branch HEAD, which
-  yields fewer, more meaningful PRs. Default-branch HEAD is the safe baseline.
+- **Decision for the owner: track release tags instead of HEAD.** Because
+  propagation is version-gated (§6), a HEAD-tracking bump between releases
+  never reaches existing installs. Tracking the latest tag (superpowers and
+  ponytail tag `vX.Y.Z`; impeccable tags `skill-vX.Y.Z`; taste-skill is
+  untagged) makes every merged bump a version change that propagates, at the
+  cost of ~15 lines in `bump_pins.py` (tag listing + version sort) and
+  leaving untagged upstreams at a fixed pin. Recommended; not implemented.
+- Publish ordering: `main` holds only docs until the `build-shipright` PR is
+  merged, so the remote smoke test runs after the merge (plan Task 8).
+- `bump-pins.yml` needs the repo setting "Allow GitHub Actions to create and
+  approve pull requests"; `main` should require a PR but not the `validate`
+  check (PRs from `GITHUB_TOKEN` never start workflows).
