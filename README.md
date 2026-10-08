@@ -1,6 +1,6 @@
 # ShipRight
 
-ShipRight is <org>'s engineering standard for Claude Code: one plugin that gives every engineer the same skills and the same delivery process, so the work we ship looks the same no matter who ran it.
+ShipRight is kureelvinay's engineering standard for Claude Code: one plugin that gives every engineer the same skills and the same delivery process, so the work we ship looks the same no matter who ran it.
 
 It bundles:
 
@@ -33,18 +33,18 @@ Rules that never bend: Claude never merges the PR; the base branch is never push
 Prerequisites:
 
 - Claude Code (CLI, desktop app, or IDE extension)
-- Git access to `github.com/<org>/shipright` that works without prompting (SSH key or a credential helper)
+- Git access to `github.com/kureelvinay/shipright` that works without prompting (SSH key or a credential helper)
 - Node.js 18+ (ponytail hooks, understand-anything dashboard)
 - Python 3 with `uv` or `pip` (graphify installs the `graphifyy` package on first use)
 
 ```bash
-claude plugin marketplace add <org>/shipright
+claude plugin marketplace add kureelvinay/shipright
 claude plugin install shipright@shipright --scope user
 ```
 
-Inside a Claude Code session (desktop app or IDE extension, where the `claude` command may not be on your PATH) the same two steps are `/plugin marketplace add <org>/shipright` and `/plugin install shipright@shipright`.
+Inside a Claude Code session (desktop app or IDE extension, where the `claude` command may not be on your PATH) the same two steps are `/plugin marketplace add kureelvinay/shipright` and `/plugin install shipright@shipright`.
 
-If `marketplace add` fails with an SSH or host-key error, use the HTTPS form instead: `claude plugin marketplace add https://github.com/<org>/shipright.git`.
+If `marketplace add` fails with an SSH or host-key error, use the HTTPS form instead: `claude plugin marketplace add https://github.com/kureelvinay/shipright.git`.
 
 Then, once, inside any Claude Code session: `/plugin` → **Marketplaces** → **shipright** → **Enable auto-update**. Without this step, future updates never reach your machine.
 
@@ -104,7 +104,7 @@ done
 
 ### claude.ai Team / Enterprise
 
-Organization settings → **Plugins & skills** → **Add** → **Sync from GitHub** → `<org>/shipright`. Set all six plugins to **Installed by default** and turn on **Sync automatically**. Members signed in with claude.ai get ShipRight with no commands; Claude Code syncs once per launch.
+Organization settings → **Plugins & skills** → **Add** → **Sync from GitHub** → `kureelvinay/shipright`. Set all six plugins to **Installed by default** and turn on **Sync automatically**. Members signed in with claude.ai get ShipRight with no commands; Claude Code syncs once per launch.
 
 ### IT-managed machines (API key / Bedrock / Vertex)
 
@@ -118,7 +118,7 @@ Add to `managed-settings.json`:
 {
   "extraKnownMarketplaces": {
     "shipright": {
-      "source": { "source": "github", "repo": "<org>/shipright" },
+      "source": { "source": "github", "repo": "kureelvinay/shipright" },
       "autoUpdate": true
     }
   },
@@ -127,7 +127,7 @@ Add to `managed-settings.json`:
 }
 ```
 
-Plugins install at the start of each user's next session. `autoUpdate` is locked on by the managed value, and `FORCE_AUTOUPDATE_PLUGINS` keeps plugin auto-update running on fleets where Claude Code's own updater is disabled (`DISABLE_AUTOUPDATER`, `DISABLE_UPDATES`, or `autoUpdates: false`). If your machines reach GitHub over HTTPS rather than SSH, use `"source": { "source": "git", "url": "https://github.com/<org>/shipright.git" }` as the marketplace source instead.
+Plugins install at the start of each user's next session. `autoUpdate` is locked on by the managed value, and `FORCE_AUTOUPDATE_PLUGINS` keeps plugin auto-update running on fleets where Claude Code's own updater is disabled (`DISABLE_AUTOUPDATER`, `DISABLE_UPDATES`, or `autoUpdates: false`). If your machines reach GitHub over HTTPS rather than SSH, use `"source": { "source": "git", "url": "https://github.com/kureelvinay/shipright.git" }` as the marketplace source instead.
 
 ## For maintainers
 
@@ -143,7 +143,7 @@ claude plugin validate . --strict
 claude plugin validate plugins/shipright --strict
 python3 -m unittest discover -s tests -v
 export CLAUDE_CONFIG_DIR="$(mktemp -d)"
-claude plugin marketplace add <org>/shipright
+claude plugin marketplace add kureelvinay/shipright
 claude plugin install shipright@shipright --scope user
 claude plugin list   # expect 6 plugins
 unset CLAUDE_CONFIG_DIR

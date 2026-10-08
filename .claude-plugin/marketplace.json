@@ -2,10 +2,10 @@
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "shipright",
   "metadata": {
-    "description": "ShipRight: the <org> AI-PDLC standard for Claude Code. One install, every engineer gets the same skills and process."
+    "description": "ShipRight: the kureelvinay AI-PDLC standard for Claude Code. One install, every engineer gets the same skills and process."
   },
   "owner": {
-    "name": "<org> Engineering"
+    "name": "kureelvinay Engineering"
   },
   "plugins": [
     {
