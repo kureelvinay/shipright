@@ -53,6 +53,11 @@ Verify:
 - `claude plugin list` shows six plugins: shipright, superpowers, impeccable, taste-skill, ponytail, understand-anything.
 - In a new session, typing `/shipright:` autocompletes `ship`, and the session's first context contains "SHIPRIGHT ACTIVE".
 
+### Troubleshooting
+
+- **"Failed to add marketplace"** in the desktop app's plugin pane, with `its source doesn't match its extraKnownMarketplaces entry` in the app log (`~/Library/Logs/Claude/main.log` on macOS): ShipRight is already registered on this machine from a different source form. The CLI shorthand `kureelvinay/shipright` records a `github` source; the pane records the HTTPS URL as a `git` source, and the two are not interchangeable once one exists. Removing the plugin does not remove that entry. Fix: run `claude plugin marketplace list`; if `shipright` is listed, skip the add and run `claude plugin install shipright@shipright --scope user`. To add from the pane anyway, first delete the `shipright` entry under `extraKnownMarketplaces` in `~/.claude/settings.json`, then add again and re-enable auto-update.
+- **"Please make sure you have the correct access rights"** or **"unable to get password"**: git cannot authenticate to the private repo without prompting. Run `gh auth login` and then `gh auth setup-git`, or add an SSH key to your GitHub account, and confirm you have read access to `github.com/kureelvinay/shipright`.
+
 ## Daily cheat-sheet
 
 | You want to… | Use |
