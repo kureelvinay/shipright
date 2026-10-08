@@ -38,7 +38,8 @@ shipright/
 ├── .claude-plugin/
 │   └── marketplace.json          # six entries: shipright + five third-party, SHA-pinned
 ├── .github/workflows/
-│   └── validate.yml              # runs `claude plugin validate` on PRs and pushes
+│   ├── validate.yml              # runs `claude plugin validate` on PRs and pushes
+│   └── bump-pins.yml             # weekly: opens a PR when any upstream plugin has new commits
 ├── README.md                     # the education doc: process, install, cheat-sheet, admin, maintainers
 ├── docs/superpowers/specs/       # this spec (and future ones)
 └── plugins/shipright/
@@ -241,6 +242,29 @@ One job on `pull_request` and `push` to `main`: checkout, setup-node 22,
 `claude plugin validate plugins/shipright --strict`. Under 20 lines. Validate
 needs no API key.
 
+### 4.7 `.github/workflows/bump-pins.yml` (how we learn about upstream updates)
+
+Runs on a weekly cron (Monday 06:00 UTC) and on manual dispatch. One job:
+
+1. Checkout; install Claude Code CLI (same as validate.yml).
+2. For each of the five third-party entries in `marketplace.json`, run
+   `git ls-remote <upstream-url> HEAD` and compare the result to the entry's
+   `sha`.
+3. If nothing moved, exit. Otherwise rewrite the changed `sha` values (and the
+   version noted in `description`, taken from upstream `plugin.json`), run
+   `claude plugin validate . --strict`, and push to a fixed branch `bump-pins`
+   (force-push, so repeated runs refresh one PR instead of piling up).
+4. Open or update a PR titled "Bump third-party plugin pins" via `gh pr create`
+   with `GITHUB_TOKEN`. Body lists, per plugin, old → new sha and a one-click
+   GitHub compare link (`https://github.com/<owner>/<repo>/compare/<old>...<new>`)
+   so the reviewer reads the upstream diff before merging.
+
+Validation runs inside this workflow on purpose: PRs opened with
+`GITHUB_TOKEN` do not trigger other workflows, so validate.yml would not run
+on the bot's PR. Under ~60 lines including the inline Python that edits the
+JSON. Merging the PR is the only human action; propagation to machines is
+then automatic (§6).
+
 ## 5. Distribution summary
 
 | Audience | Mechanism | Engineer effort |
@@ -265,8 +289,10 @@ All three read the same repo, so one PR updates every channel.
   after reading the upstream diff, because that code runs on every engineer's
   machine. CI validate must pass. No CHANGELOG file; git log and tags suffice.
 - **Update policy: pinned, then pushed.** Upstream changes never reach
-  engineers on their own. A maintainer bumps the pin (target cadence: monthly
-  review of the five upstreams, sooner for a security fix). Once merged,
+  engineers on their own. The weekly bump-pins workflow (§4.7) opens a PR
+  whenever any upstream has new commits; a maintainer reviews the compare
+  link and merges (or runs the workflow by hand for an urgent security fix).
+  Once merged,
   propagation is automatic for every machine whose `shipright` marketplace has
   auto-update on: Claude Code refreshes auto-update marketplaces within ~10
   minutes of a session's first message and updates the installed plugins on
@@ -344,3 +370,6 @@ app bundles its own); install it once with `npm i -g @anthropic-ai/claude-code`.
 - That `claude plugin validate .` accepts a marketplace root (§7); otherwise
   validate the marketplace via the `/plugin` UI or the schema URL.
 - `git ls-remote` results for the five pins (§6).
+- Whether each upstream publishes release tags consistently. If all five do,
+  bump-pins may track the latest tag instead of default-branch HEAD, which
+  yields fewer, more meaningful PRs. Default-branch HEAD is the safe baseline.
