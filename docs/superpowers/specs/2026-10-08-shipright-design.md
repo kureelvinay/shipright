@@ -169,7 +169,7 @@ Use the standard flow, not ad-hoc edits:
 - Writing tests for uncovered paths → /shipright:patch-uncovered-branches
 - Release health / test-gap triage → /shipright:branch-audit
 - Unfamiliar codebase → /shipright:graphify or /understand-anything:understand
-- UI changes → impeccable runs inside /ship; or /impeccable:audit on demand
+- UI changes → impeccable runs inside /ship; on demand: /impeccable:impeccable audit
 
 Ponytail (lazy senior dev) is on: smallest working diff, no speculative abstractions.
 Process guide: https://github.com/<org>/shipright#readme
@@ -198,7 +198,7 @@ Sections, in order:
    Verify: `claude plugin list` shows six plugins; typing `/shipright:` in a
    session autocompletes `ship`.
 3. **Daily cheat-sheet.** Table of job → skill (same mapping as welcome.md,
-   plus `/ponytail lite|full|ultra`, `/understand-anything:understand-onboard`).
+   plus `/ponytail:ponytail lite|full|ultra`, `/understand-anything:understand-onboard`).
 4. **Migrating from individual installs.** If you previously installed any of
    the five dependencies from another marketplace, uninstall those copies so
    skills are not duplicated:
