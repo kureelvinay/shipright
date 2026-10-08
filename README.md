@@ -42,6 +42,8 @@ claude plugin marketplace add <org>/shipright
 claude plugin install shipright@shipright --scope user
 ```
 
+Inside a Claude Code session (desktop app or IDE extension, where the `claude` command may not be on your PATH) the same two steps are `/plugin marketplace add <org>/shipright` and `/plugin install shipright@shipright`.
+
 If `marketplace add` fails with an SSH or host-key error, use the HTTPS form instead: `claude plugin marketplace add https://github.com/<org>/shipright.git`.
 
 Then, once, inside any Claude Code session: `/plugin` → **Marketplaces** → **shipright** → **Enable auto-update**. Without this step, future updates never reach your machine.
@@ -80,12 +82,22 @@ Also delete personal copies of `ship` or `graphify` under `~/.claude/skills/`. P
 
 ## Getting updates
 
-Third-party plugins are pinned to exact commits. A weekly job opens a PR when any of them has moved; a maintainer reviews and merges. With auto-update enabled (install step 3), your machine picks the change up within about ten minutes of your next session and loads it on the next launch, or immediately with `/reload-plugins`.
+Third-party plugins are pinned to exact commits. A weekly job opens a PR when any of them has moved; a maintainer reviews and merges. With auto-update enabled (the **Enable auto-update** step under Install), your machine picks the change up within about ten minutes of your next session and loads it on the next launch, or immediately with `/reload-plugins`.
 
-Manual update any time:
+One limitation to know: Claude Code decides whether a plugin needs updating by its upstream `version` string, not by the pinned commit. A pin bump that lands between upstream releases (same version, new commit) reaches **new** installs but not machines that already have that version. The weekly PR's compare link shows whether the upstream version changed. To force a machine onto the current pins:
 
 ```bash
-claude plugin update shipright@shipright
+for p in superpowers impeccable taste-skill ponytail understand-anything; do
+  claude plugin uninstall "$p@shipright" && claude plugin install "$p@shipright" --scope user
+done
+```
+
+Manual update of everything at once (picks up version changes only; `claude plugin update` does not cascade to dependencies):
+
+```bash
+for p in shipright superpowers impeccable taste-skill ponytail understand-anything; do
+  claude plugin update "$p@shipright"
+done
 ```
 
 ## For admins
@@ -110,16 +122,20 @@ Add to `managed-settings.json`:
       "autoUpdate": true
     }
   },
-  "enabledPlugins": { "shipright@shipright": true }
+  "enabledPlugins": { "shipright@shipright": true },
+  "env": { "FORCE_AUTOUPDATE_PLUGINS": "1" }
 }
 ```
 
-Plugins install at the start of each user's next session. `autoUpdate` is locked on by the managed value. If your machines reach GitHub over HTTPS rather than SSH, use `"source": { "source": "url", "url": "https://github.com/<org>/shipright.git" }` as the marketplace source instead.
+Plugins install at the start of each user's next session. `autoUpdate` is locked on by the managed value, and `FORCE_AUTOUPDATE_PLUGINS` keeps plugin auto-update running on fleets where Claude Code's own updater is disabled (`DISABLE_AUTOUPDATER`, `DISABLE_UPDATES`, or `autoUpdates: false`). If your machines reach GitHub over HTTPS rather than SSH, use `"source": { "source": "git", "url": "https://github.com/<org>/shipright.git" }` as the marketplace source instead.
 
 ## For maintainers
 
-- `plugins/shipright/.claude-plugin/plugin.json` carries the version. Bump it on any change to skills, hook, welcome text, or dependencies, then tag with `claude plugin tag`.
+- The ShipRight version lives in two places that must match: `plugins/shipright/.claude-plugin/plugin.json` and the `shipright` entry in `.claude-plugin/marketplace.json`. Bump both on any change to skills, hook, welcome text, or dependencies, then tag with `claude plugin tag`.
 - Third-party pins live in `.claude-plugin/marketplace.json` as `sha` values. `.github/workflows/bump-pins.yml` runs every Monday and opens a PR with compare links when any upstream moved. Read the diff, then merge. Run it by hand from the Actions tab for an urgent fix.
+- `bump-pins.yml` opens its PR with the built-in `GITHUB_TOKEN`, which GitHub blocks by default. Once, in the repo: **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests** (for an org repo, the org-level setting of the same name must allow it too). Without this, the Monday run fails at `gh pr create`.
+- Keep `.claude-plugin/marketplace.json` in canonical form: `json.dumps(indent=2)` plus a trailing newline. A test fails CI otherwise. After a hand edit, reformat with `python3 -c "import json;p='.claude-plugin/marketplace.json';d=json.load(open(p));open(p,'w').write(json.dumps(d,indent=2)+'\n')"`.
+- If you add required status checks on `main`, bump PRs will never receive them (PRs opened by `GITHUB_TOKEN` do not start workflows). Close and reopen the PR by hand to trigger `validate`, or keep `validate` optional and require only a pull-request review.
 - Before tagging a release:
 
 ```bash
