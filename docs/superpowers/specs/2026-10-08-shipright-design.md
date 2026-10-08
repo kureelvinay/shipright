@@ -250,8 +250,7 @@ Runs on a weekly cron (Monday 06:00 UTC) and on manual dispatch. One job:
 2. For each of the five third-party entries in `marketplace.json`, run
    `git ls-remote <upstream-url> HEAD` and compare the result to the entry's
    `sha`.
-3. If nothing moved, exit. Otherwise rewrite the changed `sha` values (and the
-   version noted in `description`, taken from upstream `plugin.json`), run
+3. If nothing moved, exit. Otherwise rewrite the changed `sha` values, run
    `claude plugin validate . --strict`, and push to a fixed branch `bump-pins`
    (force-push, so repeated runs refresh one PR instead of piling up).
 4. Open or update a PR titled "Bump third-party plugin pins" via `gh pr create`
@@ -284,8 +283,9 @@ All three read the same repo, so one PR updates every channel.
   `git ls-remote` against each upstream's tag or default branch:
   superpowers 6.3.0, impeccable 4.1.3, taste-skill 1.0.0, ponytail 4.13.0,
   understand-anything 2.9.4. If no tag exists for a version, pin the current
-  default-branch HEAD and record the version in the entry's `description`.
-- Bumping a pin: one PR that changes the `sha` (and `description` version),
+  default-branch HEAD. Entry descriptions stay version-free; the `sha` is the
+  version.
+- Bumping a pin: one PR that changes the `sha`,
   after reading the upstream diff, because that code runs on every engineer's
   machine. CI validate must pass. No CHANGELOG file; git log and tags suffice.
 - **Update policy: pinned, then pushed.** Upstream changes never reach
