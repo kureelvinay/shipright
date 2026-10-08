@@ -96,24 +96,28 @@ Claude Code. `graphify`'s `.graphify_version` file is copied too.
     {
       "name": "taste-skill",
       "description": "Design-taste skills: minimalist, brutalist, soft, redesign, image-to-code.",
-      "source": { "source": "github", "repo": "leonxlnx/taste-skill", "sha": "<40-hex, see §6>" }
+      "source": { "source": "url", "url": "https://github.com/leonxlnx/taste-skill.git", "sha": "<40-hex, see §6>" }
     },
     {
       "name": "ponytail",
       "description": "Lazy-senior-dev mode: YAGNI, stdlib first, shortest working diff.",
-      "source": { "source": "github", "repo": "DietrichGebert/ponytail", "sha": "<40-hex, see §6>" }
+      "source": { "source": "url", "url": "https://github.com/DietrichGebert/ponytail.git", "sha": "<40-hex, see §6>" }
     },
     {
       "name": "understand-anything",
       "description": "Codebase knowledge graphs, onboarding tours, diff analysis, dashboard.",
-      "source": { "source": "github", "repo": "Egonex-AI/Understand-Anything", "sha": "<40-hex, see §6>" }
+      "source": { "source": "url", "url": "https://github.com/Egonex-AI/Understand-Anything.git", "sha": "<40-hex, see §6>" }
     }
   ]
 }
 ```
 
 Source shapes mirror ones already proven in the official marketplace
-(`url` with `sha` for superpowers; `git-subdir` with full URL, `path`, `sha`).
+(`url` with `sha`; `git-subdir` with full URL, `path`, `sha`). The `github`
+shorthand is deliberately not used: during implementation it cloned over SSH
+and failed on a machine with no GitHub host key, while HTTPS `url` sources
+install with no SSH setup. All five upstreams are public, so HTTPS needs no
+credentials.
 The `superpowers` plugin manifest lives at the repo root, as do taste-skill,
 ponytail and understand-anything; impeccable's lives under `plugin/`, hence
 `git-subdir`.
