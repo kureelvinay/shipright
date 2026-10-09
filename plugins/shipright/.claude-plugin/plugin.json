@@ -1,7 +1,15 @@
 {
   "name": "shipright",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "ShipRight: the kureelvinay AI-PDLC standard. Ship features end to end with one human checkpoint, gate PRs on branch coverage, and understand any codebase.",
-  "author": { "name": "kureelvinay Engineering" },
-  "dependencies": ["superpowers", "impeccable", "taste-skill", "ponytail", "understand-anything"]
+  "author": {
+    "name": "kureelvinay Engineering"
+  },
+  "dependencies": [
+    "superpowers",
+    "impeccable",
+    "taste-skill",
+    "ponytail",
+    "understand-anything"
+  ]
 }
