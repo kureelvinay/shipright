@@ -105,6 +105,10 @@ for p in shipright superpowers impeccable taste-skill ponytail understand-anythi
 done
 ```
 
+## Improving the process
+
+The skills in this bundle are the process. When a step misleads you, sends you down a dead end, or misses a check that would have saved you, do not work around it silently: open a PR that edits the skill text with the lesson (what happened, what to do instead), the way `ship`'s own "Never Do" list was built. The bundled `superpowers:writing-skills` skill helps phrase and test the change. Bump the plugin version in both `plugins/shipright/.claude-plugin/plugin.json` and the `shipright` entry in `.claude-plugin/marketplace.json`, or the change never reaches installed machines.
+
 ## For admins
 
 ### claude.ai Team / Enterprise
