@@ -1,7 +1,7 @@
 # ShipRight — Company-standard Claude Code bundle
 
 **Date:** 2026-10-08
-**Status:** Approved in brainstorming, awaiting written-spec review
+**Status:** Implemented and published (v1.0.0 on 2026-10-08); see §11 for changes since
 **Repo:** `github.com/<org>/shipright` (private). `<org>` is a deliberate placeholder: the GitHub org or user handle, to be filled in before first push.
 
 ## 1. Goal
@@ -396,3 +396,32 @@ app bundles its own); install it once with `npm i -g @anthropic-ai/claude-code`.
 - `bump-pins.yml` needs the repo setting "Allow GitHub Actions to create and
   approve pull requests"; `main` should require a PR but not the `validate`
   check (PRs from `GITHUB_TOKEN` never start workflows).
+
+## 11. Changes after v1.0.0 (same day)
+
+Each landed as its own PR on `kureelvinay/shipright`; the README is the
+user-facing source of truth and was kept in sync (PRs #8, #9).
+
+- **Tag tracking (PR #2, plugin unchanged).** A marketplace entry with a
+  `ref` next to its `sha` follows the newest tag of the same prefix family
+  (strict `X.Y.Z`, prereleases ignored, annotated tags peeled, never
+  backwards); entries with only `sha` follow HEAD. superpowers, ponytail and
+  impeccable are tag-tracked. Resolves the §10 decision; §6 updated.
+- **First bot bump (PR #3).** superpowers v6.3.0 → v6.4.2, ponytail v4.13.0 →
+  v5.1.0, taste-skill HEAD move. Propagation verified on the author's
+  machine: tag bumps updated existing installs, the HEAD move did not.
+- **Troubleshooting (PR #4).** Marketplace-source mismatch in the desktop
+  plugin pane (the bundled CLI 2.1.293 rejects re-adding a marketplace under
+  a different source form; removing the plugin keeps the entry) and the two
+  git-auth failure messages.
+- **`/shipright:doctor` (PR #5, plugin 1.1.0).** Preflight script + skill:
+  CLI, Node, Python, uv/pip, non-interactive git access, marketplace
+  registered, six plugins, duplicate dependency copies, auto-update on,
+  leftover personal skills; one fix line per failure; CI runs a bare-env
+  test. Found that re-adding a marketplace silently drops `autoUpdate`.
+- **Lessons loop (PR #6).** README section on folding incidents into the
+  skill text via PR, with the two-place version bump.
+- **Security pass and adoption footer (PR #7, plugin 1.2.0).** `ship` step
+  4b runs the built-in `/security-review` when the diff touches auth,
+  secrets, dependencies, CI, infra, or trust-boundary parsing; every
+  pipeline PR ends with `Shipped with ShipRight`.
