@@ -78,6 +78,7 @@ gh api -H "Accept: application/vnd.github.raw" repos/kureelvinay/shipright/conte
 | Triage test gaps before a release | `/shipright:branch-audit` |
 | Understand an unfamiliar codebase | `/shipright:graphify` or `/understand-anything:understand` |
 | Onboard someone to a repo | `/understand-anything:understand-onboard` |
+| Security-check a branch you are opening by hand | `/security-review` (also runs inside `/ship` when the diff touches auth, secrets, dependencies, CI, or infra) |
 | Audit or polish UI | `/impeccable:impeccable audit` (also runs inside `/ship` when UI changed) |
 | Change how aggressive the minimal-diff mode is | `/ponytail:ponytail lite`, `full` (default), or `ultra` |
 
@@ -155,12 +156,14 @@ Plugins install at the start of each user's next session. `autoUpdate` is locked
 - `bump-pins.yml` opens its PR with the built-in `GITHUB_TOKEN`, which GitHub blocks by default. Once, in the repo: **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests** (for an org repo, the org-level setting of the same name must allow it too). Without this, the Monday run fails at `gh pr create`.
 - Keep `.claude-plugin/marketplace.json` in canonical form: `json.dumps(indent=2)` plus a trailing newline. A test fails CI otherwise. After a hand edit, reformat with `python3 -c "import json;p='.claude-plugin/marketplace.json';d=json.load(open(p));open(p,'w').write(json.dumps(d,indent=2)+'\n')"`.
 - If you add required status checks on `main`, bump PRs will never receive them (PRs opened by `GITHUB_TOKEN` do not start workflows). Close and reopen the PR by hand to trigger `validate`, or keep `validate` optional and require only a pull-request review.
+- CI (`.github/workflows/validate.yml`) runs the strict marketplace and plugin validation, the unit tests and the doctor test on every PR and push to `main`.
 - Before tagging a release:
 
 ```bash
 claude plugin validate . --strict
 claude plugin validate plugins/shipright --strict
 python3 -m unittest discover -s tests -v
+bash tests/test_doctor.sh
 export CLAUDE_CONFIG_DIR="$(mktemp -d)"
 claude plugin marketplace add kureelvinay/shipright
 claude plugin install shipright@shipright --scope user
