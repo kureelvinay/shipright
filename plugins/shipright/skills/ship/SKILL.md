@@ -59,6 +59,7 @@ explicit re-ask before repeating it.
 | 2. Build | Sonnet |
 | 3. Branch + PR | Sonnet |
 | 4. Code review | Opus |
+| 4b. Security review | Opus |
 | 5. UI review | Opus |
 | 6. Apply fixes | Sonnet |
 | 7. Verify | Opus |
@@ -121,7 +122,9 @@ which model is orchestrating.
    that base with `gh pr create` (check memory for a project-specific
    `gh` path/auth note). Write the PR description in the Summary + Test
    Plan format with the generated-by footer, same as any other PR I
-   create. Never push directly to the base branch.
+   create. End the description with the line `Shipped with ShipRight` on
+   its own, so adoption can be counted with a GitHub search. Never push
+   directly to the base branch.
 
    If this PR depends on another not-yet-merged PR (a stacked PR),
    target it at that PR's branch, but treat that as temporary, not a
@@ -151,6 +154,15 @@ which model is orchestrating.
    at — that gap is exactly how two real branding bugs shipped
    undetected in an earlier project despite passing tests, because the
    relevant source files simply weren't in the test's fixture set.
+4b. **Security review (model: Opus) — only if the diff touches auth or
+   session code, secrets or credential handling, dependency manifests or
+   lockfiles, CI workflows, infrastructure or deploy config, or input
+   parsing at a trust boundary.** Run the built-in `/security-review`
+   against the PR branch. It reports only high-confidence exploitable
+   findings (injection, auth bypass, secrets exposure, unsafe
+   deserialization, data leakage), so treat every High and Medium finding
+   as a fix for Step 6, not a judgment call. When none of those areas
+   changed, skip cleanly and say so in one line in the handback.
 5. **UI review (model: Opus) — only if the diff touches UI/frontend files.** Run the
    `impeccable` skill against the branch for a visual/UX pass. Skip
    cleanly (don't force it) when nothing UI-facing changed.
@@ -241,7 +253,8 @@ which model is orchestrating.
    encountering a pre-existing failure, check that place before asking
    the user whether it's known.
 8. **Hand back (model: Sonnet).** Report the PR URL, a one-line summary, test/build
-   status, what each review flagged and how it was resolved, and — for
+   status, what each review flagged (code, security when it ran, UI) and
+   how it was resolved, and — for
    UI-facing changes — a screenshot or brief description of what you
    actually saw when using it live. If a packaged artifact was built or
    published as part of this run, report its checksum (and release tag,
@@ -259,6 +272,11 @@ which model is orchestrating.
   above).
 - Never skip the Impeccable pass when UI changed, and never run it
   when nothing UI-facing changed.
+- Never skip the security pass when the diff touches auth, secrets,
+  dependencies, CI, infra, or trust-boundary parsing — and never run it as
+  a formality when none of those changed.
+- Never omit the `Shipped with ShipRight` footer from a PR this pipeline
+  opens — it is how adoption is measured.
 - Never run a production build while a dev server is pointed at the
   same output directory — stop it first, build, restart after.
 - Never claim the PR is ready without evidence: this run's own test,
@@ -312,6 +330,7 @@ which model is orchestrating.
 | Build | Sonnet | subagent-driven-development | No* |
 | Branch + PR (confirm base, Summary+Test Plan, combined-branch testing if needed) | Sonnet | git / gh | No |
 | Code review (incl. test-coverage/fixture-gap check) | Opus | `/code-review` (effort: high) | No |
+| Security review | Opus | `/security-review` (if diff touches auth/secrets/deps/CI/infra/trust-boundary parsing) | No |
 | UI review | Opus | `impeccable` (if UI changed) | No |
 | Apply fixes | Sonnet | — | No |
 | Verify | Opus | unit + integration/UAT (separate results, pre-existing-failure check) + build (dev server stopped first) + live use for UI changes + clean-environment check + packaged-artifact/checksum verification if applicable | No |
