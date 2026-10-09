@@ -6,7 +6,7 @@ It bundles:
 
 | Plugin | What it gives you |
 |---|---|
-| **shipright** (this repo) | `/shipright:ship` end-to-end delivery, branch-coverage gates, `graphify` knowledge graphs, and the session reminder |
+| **shipright** (this repo) | `/shipright:ship` end-to-end delivery, branch-coverage gates, `graphify` knowledge graphs, `/shipright:doctor` setup check, and the session reminder |
 | superpowers | brainstorming, planning, TDD, subagent-driven development, systematic debugging, verification |
 | impeccable | frontend design audits and polish |
 | taste-skill | design-taste references (minimalist, brutalist, soft, redesign) |
@@ -19,12 +19,13 @@ Every feature or bug fix goes through `/shipright:ship`:
 
 1. **Ideate + plan.** Brainstorm the change and write a plan. **You approve the plan.** This is the only routine checkpoint.
 2. **Build.** Subagents implement the plan on a feature branch, test-first.
-3. **Branch + PR.** Push and open a PR against the base branch. Never push to base directly.
+3. **Branch + PR.** Push and open a PR against the base branch, its description ending with `Shipped with ShipRight`. Never push to base directly.
 4. **Code review.** `/code-review` at high effort.
-5. **UI review.** `impeccable` runs if UI files changed.
-6. **Apply fixes.** Review findings land on the branch.
-7. **Verify.** Full test suite, build, and live use for UI changes. A partial pass is not a pass.
-8. **Hand back.** PR link, test status, what each review flagged and how it was resolved.
+5. **Security review.** `/security-review` runs when the diff touches auth, secrets, dependencies, CI, infrastructure, or input parsing at a trust boundary; otherwise it is skipped with a one-line note.
+6. **UI review.** `impeccable` runs if UI files changed.
+7. **Apply fixes.** Review findings land on the branch.
+8. **Verify.** Full test suite, build, and live use for UI changes. A partial pass is not a pass.
+9. **Hand back.** PR link, test status, what each review (code, security, UI) flagged and how it was resolved.
 
 Rules that never bend: Claude never merges the PR; the base branch is never pushed to directly; nothing is reported as ready without this run's own test and build output.
 
